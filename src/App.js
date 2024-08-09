@@ -1,23 +1,40 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect, useReducer } from "react";
+import { Error, Header, Loader, Main } from "./components";
 
 function App() {
+  const initialState = {
+    questions: [],
+    status: "loading",
+  };
+  function reducer(state, action) {
+    switch (action.type) {
+      case "dataReceived":
+        return { ...state, questions: action.payload, status: "ready" };
+      case "dataFailed":
+        return { ...state, status: "error" };
+      default:
+        throw new Error("Error");
+    }
+  }
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const { status } = state;
+  useEffect(() => {
+    fetch("http://localhost:8000/questions")
+      .then((res) => {
+        return res.json();
+      })
+      .then((data) => dispatch({ type: "dataReceived", payload: data }))
+      .catch((error) => dispatch({ type: "dataFailed" }));
+  }, []);
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="app">
+      <Header />
+      <Main>
+        {/* <p>15/20</p>
+        <p>Qustions</p> */}
+        {status === "loading" && <Loader />}
+        {status === "error" && <Error />}
+      </Main>
     </div>
   );
 }
